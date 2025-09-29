@@ -4,6 +4,8 @@ An MCP (Model Context Protocol) server that provides AWS IAM analysis capabiliti
 
 ## Live Demo
 
+https://github.com/user-attachments/assets/402b5fa9-3138-450d-ab33-552601d69c36
+
 ## MCP Tools
 
 The following capabilities of `iam-lens` are exposed via this MCP server:
@@ -112,12 +114,12 @@ Once configured, you can use the prompts like these in your AI assistant:
 
 ### Simulate IAM Request
 ```
-Check if arn:aws:iam::123456789012:user/myuser can perform get the S3 bucket arn:aws:s3:::mybucket/myfile.txt
+Check if arn:aws:iam::123456789012:user/myuser can fetch the contents of the S3 bucket: arn:aws:s3:::mybucket/myfile.txt
 ```
 
 ### Find Resource Access
 ```
-Who can access arn:aws:s3:::mybucket with s3:GetObject permission?
+Who can access the S3 bucket: arn:aws:s3:::mybucket?
 ```
 
 ## Configuration
@@ -128,6 +130,6 @@ Who can access arn:aws:s3:::mybucket with s3:GetObject permission?
 
 ## Troubleshooting
 
-### "Principal does not exist" Error" / "Account not found" Error"
+### "Principal does not exist" Error / "Account not found" Error
 - Ensure that `iam-collect.jsonc` is correctly configured and points to the right data directory
 - Ensure that the path to `iam-collect.jsonc` is absolute and the `storage.path` value in the config file is also absolute.
