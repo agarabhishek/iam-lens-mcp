@@ -1,0 +1,12 @@
+[project]
+name = "iam-lens-mcp-server"
+version = "0.1.0"
+description = "MCP server for AWS IAM analysis using iam-lens tool"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "fastmcp>=2.12.4",
+]
+
+[project.scripts]
+iam-lens-mcp = "iam_lens_server:main"
