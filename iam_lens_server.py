@@ -3,6 +3,7 @@ import subprocess
 import asyncio
 import os
 from pathlib import Path
+
 # from datetime import datetime
 from typing import Optional, Dict, List, Any
 from fastmcp import FastMCP
@@ -32,7 +33,7 @@ class IamLensClient:
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
-                cwd=self.config_dir
+                cwd=self.config_dir,
             )
 
             stdout, stderr = await process.communicate()
@@ -62,6 +63,7 @@ collect_configs = os.getenv("COLLECT_CONFIGS")
 if not collect_configs:
     raise ValueError("COLLECT_CONFIGS environment variable is required but not set")
 iam_client = IamLensClient(collect_configs=collect_configs)
+
 
 @mcp.tool
 async def simulate_iam_request(
