@@ -1,12 +1,30 @@
+"""
+IAM Lens MCP Server
+
+This module implements an MCP (Model Context Protocol) server that provides AWS IAM
+analysis capabilities through two approaches:
+1. iam-lens CLI tools for fast, deterministic policy evaluation
+2. Direct IAM data analysis tools for flexible, AI-powered exploration
+
+The server exposes tools for simulating IAM requests, identifying resource access,
+analyzing principal permissions, and performing complex IAM queries.
+"""
+
 import json
 import subprocess
 import asyncio
 import os
 from pathlib import Path
-
-# from datetime import datetime
 from typing import Optional, Dict, List, Any
 from fastmcp import FastMCP
+
+# Import IAM data analysis functions
+from iam_data_analysis import (
+    get_data_directory,
+    get_iam_data_structure_internal,
+    read_iam_file_internal,
+    build_query_iam_data_response,
+)
 
 mcp = FastMCP("IAM Lens MCP Server")
 
@@ -63,6 +81,11 @@ collect_configs = os.getenv("COLLECT_CONFIGS")
 if not collect_configs:
     raise ValueError("COLLECT_CONFIGS environment variable is required but not set")
 iam_client = IamLensClient(collect_configs=collect_configs)
+
+
+# ============================================================================
+#                           iam-lens CLI Tools
+# ============================================================================
 
 
 @mcp.tool
@@ -196,6 +219,139 @@ async def principal_can(
         "principal": principal,
         "permissions": result["data"],
     }
+
+
+# ============================================================================
+#                   Direct IAM Data Analysis Tools
+# ============================================================================
+
+@mcp.tool
+async def get_iam_data_structure(
+    focus_accounts: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Get the IAM data folder structure showing available accounts, services, and resources.
+
+    This tool provides an overview of what IAM data is available without reading
+    the actual file contents. Use this to understand what data exists before
+    requesting specific files.
+
+    Args:
+        focus_accounts: Optional list of account IDs to limit the structure to
+
+    Returns:
+        Dict containing the folder structure with accounts, services, resource types, and counts
+    """
+    try:
+        data_directory = get_data_directory(iam_client.collect_configs)
+        structure = get_iam_data_structure_internal(data_directory, focus_accounts)
+        return {"success": True, **structure}
+    except Exception as e:
+        return {"success": False, "error": f"Error getting data structure: {str(e)}"}
+
+
+@mcp.tool
+async def read_iam_file(
+    file_path: str,
+    read_metadata: bool = True,
+) -> Dict[str, Any]:
+    """
+    Read and return the content of a specific IAM data file or directory.
+
+    This tool can handle both files and directories:
+    - For files: returns the file content (parsed JSON or raw text)
+    - For directories: lists the contents and optionally reads metadata.json from subdirectories
+
+    Use this after get_iam_data_structure to explore specific paths.
+
+    Args:
+        file_path: Relative path from the data directory
+                  Examples:
+                  - File: "aws/aws/indexes/principals-to-trust-policies.json"
+                  - File: "aws/aws/accounts/123456789012/iam/user/myuser/metadata.json"
+                  - Directory: "aws/aws/accounts/123456789012/iam/user"
+        read_metadata: If True and path is a directory containing resource subdirectories,
+                      automatically reads metadata.json from each (up to 100 resources)
+
+    Returns:
+        For files: Dict with file_path, content_type (json/text), and content
+        For directories: Dict with file_path, content_type (directory), items list,
+                        and optionally a resources list with metadata
+    """
+    try:
+        data_directory = get_data_directory(iam_client.collect_configs)
+        file_content = read_iam_file_internal(data_directory, file_path, read_metadata)
+        return {"success": True, **file_content}
+    except ValueError as e:
+        return {"success": False, "error": str(e)}
+    except Exception as e:
+        return {"success": False, "error": f"Unexpected error reading file: {str(e)}"}
+
+
+@mcp.tool
+async def query_iam_data(
+    query: str,
+    focus_accounts: Optional[List[str]] = None,
+    focus_services: Optional[List[str]] = None,
+) -> Dict[str, Any]:
+    """
+    Analyze IAM data to answer complex questions using direct filesystem access.
+
+    This tool orchestrates get_iam_data_structure and read_iam_file to gather
+    relevant IAM data and provide it with analysis instructions. It provides
+    comprehensive information about IAM configurations, permissions, relationships,
+    and security posture.
+
+    This is more flexible than the other tools but may be slower. Use this for:
+    - Exploratory questions about IAM setup (e.g., "What IAM users exist?")
+    - Complex cross-account or cross-service analysis
+    - Custom queries not covered by other tools
+    - Finding security issues or overly permissive configurations
+
+    Args:
+        query: Natural language question about IAM data (e.g., "What IAM users are there?")
+        focus_accounts: Optional list of account IDs to limit analysis to
+        focus_services: Optional list of services to focus on (e.g., ["iam", "s3", "lambda"])
+
+    Returns:
+        Dict containing query, structure, index files content, and analysis instructions
+    """
+    try:
+        # Get the data directory from the config
+        data_directory = get_data_directory(iam_client.collect_configs)
+
+        # Load agent instructions
+        instructions_path = Path(__file__).parent / "agent_instructions.md"
+        if not instructions_path.exists():
+            return {
+                "success": False,
+                "error": "Agent instructions file not found. Please ensure agent_instructions.md exists.",
+            }
+
+        with open(instructions_path, "r") as f:
+            agent_instructions = f.read()
+
+        # Build comprehensive response using the imported function
+        return build_query_iam_data_response(
+            data_directory=data_directory,
+            query=query,
+            agent_instructions=agent_instructions,
+            focus_accounts=focus_accounts,
+            focus_services=focus_services,
+        )
+
+    except ValueError as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "query": query,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Unexpected error: {str(e)}",
+            "query": query,
+        }
 
 
 def main():
