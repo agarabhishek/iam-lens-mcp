@@ -2,6 +2,7 @@ import json
 import subprocess
 import asyncio
 import os
+from pathlib import Path
 # from datetime import datetime
 from typing import Optional, Dict, List, Any
 from fastmcp import FastMCP
@@ -17,13 +18,21 @@ class IamLensClient:
         if not collect_configs:
             raise ValueError("collect_configs is required and cannot be None or empty")
         self.collect_configs = collect_configs
+        # Store the directory containing the config file
+        # This allows iam-lens to resolve relative paths in the config correctly
+        self.config_dir = str(Path(collect_configs).parent.absolute())
 
     async def run_command(self, args: List[str]) -> Dict[str, Any]:
         """Run iam-lens command and return parsed result"""
         try:
             cmd = [self.iam_lens_path] + args
+            # Run iam-lens from the config file's directory
+            # This allows relative paths in the config to be resolved correctly
             process = await asyncio.create_subprocess_exec(
-                *cmd, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+                cwd=self.config_dir
             )
 
             stdout, stderr = await process.communicate()
@@ -53,13 +62,6 @@ collect_configs = os.getenv("COLLECT_CONFIGS")
 if not collect_configs:
     raise ValueError("COLLECT_CONFIGS environment variable is required but not set")
 iam_client = IamLensClient(collect_configs=collect_configs)
-
-
-@mcp.tool
-def greet(name: str) -> str:
-    """Greet a user by name."""
-    return f"Hello, {name}!"
-
 
 @mcp.tool
 async def simulate_iam_request(
@@ -157,6 +159,40 @@ async def who_can_access_resource(
         "resource": resource,
         "actions": actions,
         "principals_with_access": result["data"],
+    }
+
+
+@mcp.tool
+async def principal_can(
+    principal: str,
+    shrink_action_lists: bool = False,
+) -> Dict[str, Any]:
+    """
+    Get a consolidated view of all permissions for a principal.
+
+    Args:
+        principal: The principal ARN to analyze (user or role)
+        shrink_action_lists: Reduce policy size by condensing action lists
+
+    Returns:
+        Consolidated IAM policy showing all effective permissions for the principal
+    """
+    args = ["principal-can", "--principal", principal]
+
+    if shrink_action_lists:
+        args.append("--shrink-action-lists")
+
+    # Add collectConfigs from client configuration (always present since it's required)
+    args.extend(["--collectConfigs", iam_client.collect_configs])
+
+    result = await iam_client.run_command(args)
+
+    if not result["success"]:
+        return {"error": result["error"], "principal": principal}
+
+    return {
+        "principal": principal,
+        "permissions": result["data"],
     }
 
 
