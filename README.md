@@ -2,6 +2,23 @@
 
 An MCP (Model Context Protocol) server that provides AWS IAM analysis capabilities using the [iam-lens](https://github.com/cloud-copilot/iam-lens) tool. This server enables AI assistants like Claude, Cursor, and others to interact with `iam-lens` through natural language.
 
+## Table of Contents
+
+- [Features](#features)
+- [MCP Tools](#mcp-tools)
+- [Prerequisites](#prerequisites)
+- [Setup Instructions](#setup-instructions)
+  - [1. Install Dependencies](#1-install-dependencies)
+  - [2. Clone the MCP Server](#2-clone-the-mcp-server)
+  - [3. Configure Claude Desktop](#3-configure-claude-desktop)
+- [Usage](#usage)
+  - [Simulate IAM Request](#simulate-iam-request)
+  - [Find Resource Access](#find-resource-access)
+  - [Get Principal Permissions](#get-principal-permissions)
+  - [Direct IAM Data Analysis](#direct-iam-data-analysis)
+- [Configuration](#configuration)
+- [Troubleshooting](#troubleshooting)
+
 ## Live Demo
 
 https://github.com/user-attachments/assets/402b5fa9-3138-450d-ab33-552601d69c36
