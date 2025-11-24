@@ -8,39 +8,28 @@ https://github.com/user-attachments/assets/402b5fa9-3138-450d-ab33-552601d69c36
 
 ## Features
 
-- **Dual Analysis Modes**: Fast CLI-based policy simulation AND flexible AI-powered data exploration
-- **Multi-Partition Support**: Automatically detects and works with AWS, AWS China, and AWS GovCloud partitions
+- **Dual Analysis Modes**: Leverage `iam-lens'` fast CLI-based policy simulation AND query `iam-collect`'s data structure
 - **Natural Language Queries**: Ask questions in plain English about your IAM setup
 - **Comprehensive Coverage**: Analyze users, roles, groups, policies, S3 buckets, Lambda functions, and more
 - **Security Auditing**: Find overly permissive access, cross-account trusts, and security issues
 - **Organization Analysis**: Review AWS Organizations structure, SCPs, and account hierarchies
-- **Efficient Data Access**: Pre-built indexes for fast lookups, automatic metadata retrieval for directories
+- **Efficient Data Access**: Uses `iam-lens'` pre-built indexes for fast lookups, automatic metadata retrieval for directories
 
 ## MCP Tools
 
-This MCP server provides two types of IAM analysis capabilities:
-
-### 1. iam-lens CLI Tools (Deterministic Analysis)
-
-These tools use the `iam-lens` CLI for fast, deterministic IAM policy evaluation:
+The following capabilities of `iam-lens`s are exposed via this MCP server:
 
 - **`simulate_iam_request`**: Test if a principal can perform specific actions on resources
 - **`who_can_access_resource`**: Identify which principals have access to a specific resource with certain permissions
 - **`principal_can`**: Get a consolidated view of all permissions for a specific principal (user or role)
 
-### 2. Direct IAM Data Analysis Tools (Flexible, AI-Powered)
-
-These tools provide direct access to collected IAM data for flexible, exploratory analysis:
+Additionally, this MCP server can also directly access the collected IAM data for flexible, exploratory analysis. The following tools are exposed for data exploration:
 
 - **`query_iam_data`**: Primary analysis tool that automatically provides data structure, index files, and agent instructions. Use this for complex questions about IAM setup, security posture, or custom queries.
 
 - **`read_iam_file`**: Read specific IAM data files or directories. Supports both individual files and directory listings with automatic metadata retrieval.
 
 - **`get_iam_data_structure`**: Get a quick overview of available accounts, services, and resources without reading file contents.
-
-**When to use which:**
-- Use **iam-lens CLI tools** for specific access checks and permission queries (fast, deterministic)
-- Use **direct data analysis tools** for exploratory questions, security audits, and custom analysis (flexible, comprehensive)
 
 ## Prerequisites
 
@@ -170,8 +159,6 @@ You should see `iam-lens-mcp` in the list of available servers.
 
 Once configured, you can use prompts like these in your AI assistant:
 
-### iam-lens CLI Tools (Fast, Deterministic)
-
 #### Simulate IAM Request
 ```
 Check if arn:aws:iam::123456789012:user/myuser can fetch the contents of the S3 bucket: arn:aws:s3:::mybucket/myfile.txt
@@ -191,15 +178,11 @@ Show me all permissions for arn:aws:iam::123456789012:role/MyRole
 What can arn:aws:iam::123456789012:user/Alice do? Show condensed action lists.
 ```
 
-### Direct IAM Data Analysis Tools (Flexible, Comprehensive)
+### Direct IAM Data Analysis
 
 #### Exploratory Questions
 ```
-What IAM users exist across all accounts?
-```
-
-```
-Which IAM roles trust external accounts?
+What IAM users/roless exist across all accounts?
 ```
 
 ```
@@ -216,10 +199,6 @@ Find all IAM principals with AdministratorAccess
 ```
 
 ```
-Show me all roles that can be assumed by EC2 instances
-```
-
-```
 Which resources have overly permissive access (Resource: "*")?
 ```
 
@@ -231,8 +210,6 @@ Show me the AWS Organizations structure and Service Control Policies
 ```
 What accounts are in my organization and what services do they use?
 ```
-
-**Note**: The direct analysis tools automatically detect your AWS partition (aws, aws-cn, or aws-us-gov) and work seamlessly with all partitions.
 
 ## Configuration
 
