@@ -199,7 +199,7 @@ What can arn:aws:iam::123456789012:user/Alice do? Show condensed action lists.
 
 #### Exploratory Questions
 ```
-What IAM users/roless exist across all accounts?
+What IAM users/roles exist across all accounts?
 ```
 
 ```
