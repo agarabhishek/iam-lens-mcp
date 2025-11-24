@@ -21,7 +21,7 @@ An MCP (Model Context Protocol) server that provides AWS IAM analysis capabiliti
 
 ## Live Demo
 
-https://github.com/user-attachments/assets/402b5fa9-3138-450d-ab33-552601d69c36
+https://github.com/user-attachments/assets/ad6cd661-3d22-4d27-97a3-ee58de766782
 
 ## Features
 
